@@ -36,8 +36,8 @@ const int BIN2 = 6;
 const int PWMB = 5;
 
 // motor constants
-const int LEFT_NORMAL_SPEED = 100;
-const int RIGHT_NORMAL_SPEED = 100;
+const int LEFT_NORMAL_SPEED = 150;
+const int RIGHT_NORMAL_SPEED = 150;
 const int MAX_MOTOR_SPEED = 255;
 float RMSPEED, LMSPEED;
 
@@ -59,14 +59,14 @@ float normalized_intensities[3];
 /////////////////
 //PID VARIABLES//
 /////////////////
-const float SETPOINT = 2.0;
+const float SETPOINT = 2.20;
 
 // PID constants 
-const float KP_LEFT = 1; // left motor proportional gain
+const float KP_LEFT = 150; // left motor proportional gain
 const float KI_LEFT = 0; // left motor integral gain
 const float KD_LEFT = 0; // left motor derivative gain
 
-const float KP_RIGHT = 1; // right motor proportional gain
+const float KP_RIGHT = 150; // right motor proportional gain
 const float KI_RIGHT = 0;// right motor integral gain
 const float KD_RIGHT = 0; // right motor derivative
 
@@ -102,19 +102,11 @@ void setup() {
   pinMode(IR1_PIN, INPUT);
   pinMode(IR2_PIN, INPUT);
   pinMode(IR3_PIN, INPUT);
-
-  delay(2000);
 }
 
 void loop() {
+  currentMillis = millis();
   int intensities[] = {analogRead(IR1_PIN), analogRead(IR2_PIN), analogRead(IR3_PIN)};
-  
-  // for monitoring
-  Serial.print(intensities[0]);
-  Serial.print(" ");
-  Serial.print(intensities[1]);
-  Serial.print(" ");
-  Serial.println(intensities[2]);
 
   // Add normalized values
   for(int x = 0; x < 3; x++){
@@ -124,11 +116,21 @@ void loop() {
   float sensorLocation = computeSensorXCM(normalized_intensities);
 
   if ((currentMillis - previousMillis >= DELTA_TIME) ) {
-    drivePID(sensorLocation, SETPOINT, DELTA_TIME);
-    drive(RMSPEED, LMSPEED);
+      drivePID(sensorLocation, SETPOINT, DELTA_TIME);
+      drive(RMSPEED, LMSPEED);
+      previousMillis = currentMillis;
+
+    // for monitoring
+//    Serial.print(intensities[0]);
+//    Serial.print(" ");
+//    Serial.print(intensities[1]);
+//    Serial.print(" ");
+//    Serial.print(intensities[2]);
+//    Serial.print(" ");
+//    Serial.println(sensorLocation);
+
   }
-  
-  delay(500);
+  drive(RMSPEED, LMSPEED);
 }
 
 ////////////////////
@@ -190,6 +192,8 @@ void drivePID(float sensorValue, float setpoint, float delta_t){
 
   float leftDeltaSpeed = KP_LEFT * error + KI_LEFT * leftIntegral + KD_LEFT * leftDerivative; 
   LMSPEED = LEFT_NORMAL_SPEED + leftDeltaSpeed; // choose the correct sign
+  Serial.print(leftDeltaSpeed);
+  Serial.print(" ");
 
   // check overall saturation again 
   if (LMSPEED > MAX_MOTOR_SPEED) {
@@ -215,7 +219,7 @@ void drivePID(float sensorValue, float setpoint, float delta_t){
 
   // For Right Motor
   float rightDeltaSpeed = KP_RIGHT * error + KI_RIGHT * rightIntegral + KD_RIGHT * rightDerivative; 
-  RMSPEED = RIGHT_NORMAL_SPEED + rightDeltaSpeed; // choose the correct sign
+  RMSPEED = RIGHT_NORMAL_SPEED - rightDeltaSpeed; // choose the correct sign
   Serial.println(rightDeltaSpeed);
   
   if (RMSPEED > MAX_MOTOR_SPEED) {
