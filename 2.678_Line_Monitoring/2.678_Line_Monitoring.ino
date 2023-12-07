@@ -1,30 +1,3 @@
-//////////////////////////
-//Strategy Documentation//
-//////////////////////////
-
-/*************************
-  Sensors:
-  - Reflectance Sensor
-  - Motor Driver
-
-  Objective: Linefollowing utilizing given sensors and PID Algorithm
-
-  Goals:
-  - Motor Variables and Drive Function (completed)
-    - drive test (completed)
-    - speed test (completed)
-  - Set up infrared variables and monitor (completed)
-  - normalize sensor values to positioning with map function (completed)
-  - create PID algorithm to stick to sensor seet point (blocked)
-      *Issue: left turns are not adjusting fine enough, working on adjusting around 150 Norm Speed and configuring KP Values
-      *too far left: 3; too far right: 1
-      *norm speed range: 100 - 170
-  - Cases:
-      *once it reach a cut line, what do you do?
-      *90 degree turns?
-      *infinite loop goes brr
-*/
-
 /////////////////////////////////////////////////////////////////////
 // MOTOR DRIVE VARIABLES (Pololu #713 motor driver pin assignments)//
 /////////////////////////////////////////////////////////////////////
@@ -127,6 +100,7 @@ void setup() {
   pinMode(LED1, OUTPUT);
   pinMode(LED2, OUTPUT);
   pinMode(LED3, OUTPUT);
+
 }
 
 void loop() {
@@ -141,55 +115,32 @@ void loop() {
 
   float sensorLocation = computeSensorXCM(normalized_intensities);
 
-  stage_one(sensorLocation);
+//  // intensities for monitoring
+//  Serial.print("IR1: ");
+//  Serial.print(intensities[0]);
+//  Serial.print("; ");
+//  Serial.print("IR2: ");
+//  Serial.print(intensities[1]);
+//  Serial.print("; ");
+//  Serial.print("IR3: ");
+//  Serial.print(intensities[2]);
+//  Serial.println("; ");
+
+  // normalized values for monitoring
+  Serial.print("NORM_IR1: ");
+  Serial.print(normalized_intensities[0]);
+  Serial.print("; ");
+  Serial.print("NORM_IR2: ");
+  Serial.print(normalized_intensities[1]);
+  Serial.print("; ");
+  Serial.print("NORM_IR3: ");
+  Serial.print(normalized_intensities[2]);
+  Serial.println("; ");
+
+  // sensorLocation for monitoring
+  Serial.print("Sensor Location: ");
+  Serial.println(sensorLocation);
 }
-
-////////////////////
-//Helper Functions//
-////////////////////
-
-// The course split beteween stages
-void stage_one(float sensorLocation){
-  if ((currentMillis - previousMillis >= DELTA_TIME) ) {
-    if(previousSensorLocation > 2.7 && normalized_intensities[0] < 0.2 && normalized_intensities[1] < 0.2){
-      RMSPEED = -250; // Force Right
-      LMSPEED = 250;
-      digitalWrite(LED2, HIGH);
-   // Serial.println("FORCE RIGHT");
-    } else if(previousSensorLocation < 1.1 && normalized_intensities[1] < 0.2 && normalized_intensities[2] < 0.2){
-      RMSPEED = 250;
-      LMSPEED = -250; // Force Left
-      digitalWrite(LED3, HIGH);
-   // Serial.println("FORCE LEFT");
-    } else {
-      // regular control
-      drivePID(sensorLocation, SETPOINT, DELTA_TIME);
-      drive(RMSPEED, LMSPEED);
-      previousMillis = currentMillis;
-      // Serial.println("PID");
-      digitalWrite(LED2, LOW);
-      digitalWrite(LED3, LOW);
-    }
-  }
-  drive(RMSPEED, LMSPEED);
-}
-
-//void stage_two(float sensorLocation){
-//  if ((currentMillis - previousMillis >= DELTA_TIME) ) {
-//     if(normalized_intensities[0] < 0.20 && normalized_intensities[1] < 0.20 && normalized_intensities[2] < 0.20){
-//      drive(160, 160);
-//      // Serial.println("straight");
-//      } else {
-//      // regular control
-//      drivePID(sensorLocation, SETPOINT, DELTA_TIME);
-//      drive(RMSPEED, LMSPEED);
-//      previousMillis = currentMillis;
-//      previousSensorLocation = sensorLocation;
-//      // Serial.println("PID");
-//    }
-//  }
-//  drive(RMSPEED, LMSPEED);
-//}
 
 void motorWrite(int spd, int pin_IN1 , int pin_IN2 , int pin_PWM) {
   if (spd < 0) {
