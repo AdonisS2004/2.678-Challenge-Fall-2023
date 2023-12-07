@@ -54,7 +54,7 @@ float RMSPEED, LMSPEED;
 int IR1Val, IR2Val, IR3Val;
 
 // sensor intensities
-float maximum_intensities[] = {597, 492, 634}; // less reflectance; more black; //(771 776 779) parallel to the line on the floor
+float maximum_intensities[] = {597, 492, 560}; // less reflectance; more black; //(771 776 779) parallel to the line on the floor
 float minimum_intensities[] = {34, 34, 87}; // high reflectance; more white
 float normalized_intensities[3];
 
@@ -62,16 +62,16 @@ float normalized_intensities[3];
 //PID VARIABLES//
 /////////////////
 const float SETPOINT = 2.0;
-//float previousSensorLocation = 2;
+float previousSensorLocation = 2;
 
 // PID constants 
-const float KP_LEFT = 140; // left motor proportional gain; prev: 110
+const float KP_LEFT = 140; // left motor proportional gain; prev: 140
 const float KI_LEFT = 150; // left motor integral gain prev: 150
-const float KD_LEFT = 0.45; // left motor derivative gain
+const float KD_LEFT = 0.42; // left motor derivative gain
 
-const float KP_RIGHT = 140; // right motor proportional gain; prev: 110
+const float KP_RIGHT = 140; // right motor proportional gain; prev: 140
 const float KI_RIGHT = 150;// right motor integral gain prev: 150
-const float KD_RIGHT = 0.45; // right motor derivative
+const float KD_RIGHT = 0.42; // right motor derivative prev: 0.45
 
 const float DELTA_TIME = 1; // time in milliseconds
 
@@ -87,6 +87,16 @@ float rightDerivative = 0.0;
 long currentMillis = 0;
 long previousMillis = 0;
 #define MILLISEC_TO_SEC 1/1000 // to convert from milliseconds to seconds
+
+//////////////////////////////////////
+//OBSTACLE COURSE SPECIFIC VARIABLES//
+//////////////////////////////////////
+
+int stage = 1;
+int degree_count = 0;
+int stage_timer = 0;
+int previous_stage_timer = 0;
+int stage_one_time = 0; // INSERT VALUE HERE
 
 void setup() {
   Serial.begin(9600);
@@ -116,7 +126,34 @@ void loop() {
     normalized_intensities[x] = computeNormVal(intensities[x], minimum_intensities[x], maximum_intensities[x]);
   }
 
-//  // intensities for monitoring
+  float sensorLocation = computeSensorXCM(normalized_intensities);
+  
+//  // the drive component of the line follower
+//  while(normalized_intensities[0] < 0.20 && normalized_intensities[1] < 0.20 && normalized_intensities[2] < 0.20){
+//    drive(160, 160);
+//  }
+
+//if(normalized_intensities[0] < 0.20 && normalized_intensities[1] < 0.20 && normalized_intensities[2] < 0.20){
+//      drive(160, 160);
+//      // Serial.println("straight");
+//    } else 
+
+  if(stage == 1){
+    stage_one(sensorLocation);
+    if(stage_timer - previous_stage_timer < 0){
+      stage = stage + 1;
+    }
+  }
+
+//  if(stage == 2){
+//    
+//  }
+//
+//  if(stage == 3){
+//    
+//  }
+
+  //  // intensities for monitoring
 //  Serial.print("IR1: ");
 //  Serial.print(intensities[0]);
 //  Serial.print("; ");
@@ -138,31 +175,41 @@ void loop() {
 //  Serial.print(normalized_intensities[2]);
 //  Serial.println("; ");
 
-  float sensorLocation = computeSensorXCM(normalized_intensities);
-
-  // sensorLocation for monitoring
-  Serial.print("Sensor Location: ");
-  Serial.println(sensorLocation);
-  
-  // the drive component of the line follower
-  if ((currentMillis - previousMillis >= DELTA_TIME) ) {
-//    if(previousSensorLocation > 2 && normalized_intensities[0] > 0.85 && normalized_intensities[0] > 0.85 && normalized_intensities[0] > 0.85){
-//      sensorLocation = 2.9;
-//    } else if(previousSensorLocation < 2 && normalized_intensities[0] > 0.85 && normalized_intensities[0] > 0.85 && normalized_intensities[0] > 0.85){
-//      sensorLocation = 1.1;
-//    }
-      drivePID(sensorLocation, SETPOINT, DELTA_TIME);
-      drive(RMSPEED, LMSPEED);
-      previousMillis = currentMillis;
-
-  }
-  drive(RMSPEED, LMSPEED);
-  previousSensorLocation = sensorLocation;
+//  // sensorLocation for monitoring
+//  Serial.print("Sensor Location: ");
+//  Serial.println(sensorLocation);
 }
 
 ////////////////////
 //Helper Functions//
 ////////////////////
+
+// The course split beteween stages
+void stage_one(float sensorLocation){
+  if ((currentMillis - previousMillis >= DELTA_TIME) ) {
+    if(previousSensorLocation > 2.7 && normalized_intensities[0] < 0.05 && normalized_intensities[1] < 0.05 && normalized_intensities[2] > 0.4){
+      RMSPEED = RMSPEED - 25; // Force Right
+      LMSPEED = LMSPEED + 25;
+     // Serial.println("FORCE RIGHT");
+    } else if(previousSensorLocation < 1.1 && normalized_intensities[0] > 0.4 && normalized_intensities[1] < 0.05 && normalized_intensities[2] < 0.05){
+      RMSPEED = RMSPEED + 25;
+      LMSPEED = LMSPEED - 25; // Force Left
+     // Serial.println("FORCE LEFT");
+    } else {
+      // regular control
+      drivePID(sensorLocation, SETPOINT, DELTA_TIME);
+      drive(RMSPEED, LMSPEED);
+      previousMillis = currentMillis;
+      previousSensorLocation = sensorLocation;
+      // Serial.println("PID");
+    }
+  }
+  drive(RMSPEED, LMSPEED);
+}
+
+void stage_two(){
+  
+}
 
 void motorWrite(int spd, int pin_IN1 , int pin_IN2 , int pin_PWM) {
   if (spd < 0) {
@@ -215,6 +262,7 @@ void drivePID(float sensorValue, float setpoint, float delta_t){
     leftIntegral = -MAX_MOTOR_SPEED / KI_LEFT;
   }
   
+  
   leftDerivative = (error - previousError)/delta_t;
 
   float leftDeltaSpeed = KP_LEFT * error + KI_LEFT * leftIntegral + KD_LEFT * leftDerivative; 
@@ -254,6 +302,40 @@ void drivePID(float sensorValue, float setpoint, float delta_t){
   } else if (RMSPEED < -MAX_MOTOR_SPEED) {
     RMSPEED = -MAX_MOTOR_SPEED;
   }
-  
+
   previousError = error;
+
+//  // array for monitoring
+//  float PID_LeftValues[] = {KP_LEFT * error, KI_LEFT * leftIntegral, KD_LEFT * leftDerivative};
+////
+//  // for monitoring left motor PID changes
+//  Serial.print("Left Delta Speed: ");
+//  Serial.print(leftDeltaSpeed);
+//  Serial.print(" ");
+//
+//  Serial.print("Left KP_error, KI_Error, KD_Error: [ ");
+//  for(int i=0; i<3; i++){
+//    Serial.print(PID_LeftValues[i]);
+//    Serial.print(" ");
+//  }
+//  
+//  Serial.print("] ");
+//  
+//
+//  // array for monitoring
+//  float PID_RightValues[] = {KP_RIGHT * error, KI_RIGHT * rightIntegral, KD_RIGHT * rightDerivative};
+//
+//  // for monitoring right motor PID changes
+//  Serial.print("Right Delta Speed: ");
+//  Serial.print(rightDeltaSpeed);
+//  Serial.println(" ");
+//  
+//
+//  Serial.print("Right KP_error, KI_Error, KD_Error: [ ");
+//  for(int i=0; i<3; i++){
+//    Serial.print(PID_RightValues[i]);
+//    Serial.print(" ");
+//  }
+//  
+//  Serial.println("] ");
 }
