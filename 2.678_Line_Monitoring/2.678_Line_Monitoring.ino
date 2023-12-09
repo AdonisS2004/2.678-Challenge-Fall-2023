@@ -135,7 +135,7 @@ void loop() {
   Serial.print("; ");
   Serial.print("NORM_IR3: ");
   Serial.print(normalized_intensities[2]);
-  Serial.println("; ");
+  Serial.print("; ");
 
   // sensorLocation for monitoring
   Serial.print("Sensor Location: ");

@@ -96,11 +96,11 @@ long previousMillis = 0;
 //OBSTACLE COURSE SPECIFIC VARIABLES//
 //////////////////////////////////////
 
-int stage = 1;
+int stage = 2;
 int degree_count = 0;
 int stage_timer = 0;
 int previous_stage_timer = 0;
-int stage_one_time = 32000; // INSERT VALUE HERE
+int stage_one_time = 23000; // INSERT VALUE HERE
 
 #define LED1 2
 #define LED2 3
@@ -138,10 +138,30 @@ void loop() {
   for(int x = 0; x < 3; x++){
     normalized_intensities[x] = computeNormVal(intensities[x], minimum_intensities[x], maximum_intensities[x]);
   }
-
   float sensorLocation = computeSensorXCM(normalized_intensities);
 
-  stage_one(sensorLocation);
+  // Stage One: From Start Past the Barcode 
+  if(stage == 1){
+    digitalWrite(LED1, HIGH);
+    digitalWrite(LED2, LOW);
+    digitalWrite(LED3, LOW);
+    stage_one(sensorLocation);
+    if(stage_timer - previous_stage_timer > stage_one_time){
+      stage = 2;
+    } 
+  }
+
+  // Stage two: from Hairpin turn to the beginning of the missing lines
+  if(stage == 2){
+    if(previousSensorLocation > 2.7 && normalized_intensities[0] < 0.05 && normalized_intensities[1] < 0.05 && normalized_intensities[2]){
+      forceRight(); // force right
+    } else if(previousSensorLocation < 1.1 && normalized_intensities[1] < 0.05 && normalized_intensities[2] < 0.05){
+      forceLeft(); // force left
+    } else{
+      stage_two(sensorLocation);
+      previousSensorLocation = sensorLocation;
+    }
+  }
 }
 
 ////////////////////
@@ -151,45 +171,50 @@ void loop() {
 // The course split beteween stages
 void stage_one(float sensorLocation){
   if ((currentMillis - previousMillis >= DELTA_TIME) ) {
-    if(previousSensorLocation > 2.7 && normalized_intensities[0] < 0.2 && normalized_intensities[1] < 0.2){
-      RMSPEED = -250; // Force Right
-      LMSPEED = 250;
-      digitalWrite(LED2, HIGH);
-   // Serial.println("FORCE RIGHT");
-    } else if(previousSensorLocation < 1.1 && normalized_intensities[1] < 0.2 && normalized_intensities[2] < 0.2){
-      RMSPEED = 250;
-      LMSPEED = -250; // Force Left
-      digitalWrite(LED3, HIGH);
-   // Serial.println("FORCE LEFT");
-    } else {
-      // regular control
+    // regular control
       drivePID(sensorLocation, SETPOINT, DELTA_TIME);
       drive(RMSPEED, LMSPEED);
       previousMillis = currentMillis;
       // Serial.println("PID");
+      digitalWrite(LED1, HIGH);
       digitalWrite(LED2, LOW);
       digitalWrite(LED3, LOW);
-    }
   }
   drive(RMSPEED, LMSPEED);
 }
 
-//void stage_two(float sensorLocation){
-//  if ((currentMillis - previousMillis >= DELTA_TIME) ) {
-//     if(normalized_intensities[0] < 0.20 && normalized_intensities[1] < 0.20 && normalized_intensities[2] < 0.20){
-//      drive(160, 160);
-//      // Serial.println("straight");
-//      } else {
-//      // regular control
-//      drivePID(sensorLocation, SETPOINT, DELTA_TIME);
-//      drive(RMSPEED, LMSPEED);
-//      previousMillis = currentMillis;
-//      previousSensorLocation = sensorLocation;
-//      // Serial.println("PID");
-//    }
-//  }
-//  drive(RMSPEED, LMSPEED);
-//}
+void stage_two(float sensorLocation){
+  if ((currentMillis - previousMillis >= DELTA_TIME) ) {
+    // regular control
+      drivePID(sensorLocation, SETPOINT, DELTA_TIME);
+      drive(RMSPEED, LMSPEED);
+      previousMillis = currentMillis;
+      // Serial.println("PID");
+      digitalWrite(LED1, LOW);
+      digitalWrite(LED2, HIGH);
+      digitalWrite(LED3, LOW);
+  }
+  drive(RMSPEED, LMSPEED);
+}
+
+void forceRight(){
+  RMSPEED = -250; // Force Right
+  LMSPEED = 250; // Force Right
+  delay(500);b
+  digitalWrite(LED3, LOW);
+  digitalWrite(LED1, HIGH);
+// Serial.println("FORCE RIGHT");
+}
+
+void forceLeft(){
+  RMSPEED = 250; // Force Right
+  LMSPEED = -250; // Force Left
+  delay(500);
+  digitalWrite(LED3, HIGH);
+  digitalWrite(LED1, LOW);
+// Serial.println("FORCE LEFT");
+}
+
 
 void motorWrite(int spd, int pin_IN1 , int pin_IN2 , int pin_PWM) {
   if (spd < 0) {
