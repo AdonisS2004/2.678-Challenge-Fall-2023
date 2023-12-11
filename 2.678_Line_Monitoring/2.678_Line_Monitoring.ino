@@ -31,8 +31,8 @@ float RMSPEED, LMSPEED;
 int IR1Val, IR2Val, IR3Val;
 
 // sensor intensities
-float maximum_intensities[] = {597, 492, 560}; // less reflectance; more black; //(771 776 779) parallel to the line on the floor
-float minimum_intensities[] = {34, 34, 87}; // high reflectance; more white
+float maximum_intensities[] = {554, 447, 514}; // less reflectance; more black; //(771 776 779) parallel to the line on the floor
+float minimum_intensities[] = {61, 27, 38}; // high reflectance; more white
 float normalized_intensities[3]; // empty varibale to hold normalized values
 
 /////////////////
@@ -115,31 +115,31 @@ void loop() {
 
   float sensorLocation = computeSensorXCM(normalized_intensities);
 
-//  // intensities for monitoring
-//  Serial.print("IR1: ");
-//  Serial.print(intensities[0]);
-//  Serial.print("; ");
-//  Serial.print("IR2: ");
-//  Serial.print(intensities[1]);
-//  Serial.print("; ");
-//  Serial.print("IR3: ");
-//  Serial.print(intensities[2]);
-//  Serial.println("; ");
+  // intensities for monitoring
+  Serial.print("IR1: ");
+  Serial.print(intensities[0]);
+  Serial.print("; ");
+  Serial.print("IR2: ");
+  Serial.print(intensities[1]);
+  Serial.print("; ");
+  Serial.print("IR3: ");
+  Serial.print(intensities[2]);
+  Serial.println("; ");
 
-  // normalized values for monitoring
-  Serial.print("NORM_IR1: ");
-  Serial.print(normalized_intensities[0]);
-  Serial.print("; ");
-  Serial.print("NORM_IR2: ");
-  Serial.print(normalized_intensities[1]);
-  Serial.print("; ");
-  Serial.print("NORM_IR3: ");
-  Serial.print(normalized_intensities[2]);
-  Serial.print("; ");
-
-  // sensorLocation for monitoring
-  Serial.print("Sensor Location: ");
-  Serial.println(sensorLocation);
+//  // normalized values for monitoring
+//  Serial.print("NORM_IR1: ");
+//  Serial.print(normalized_intensities[0]);
+//  Serial.print("; ");
+//  Serial.print("NORM_IR2: ");
+//  Serial.print(normalized_intensities[1]);
+//  Serial.print("; ");
+//  Serial.print("NORM_IR3: ");
+//  Serial.print(normalized_intensities[2]);
+//  Serial.print("; ");
+//
+//  // sensorLocation for monitoring
+//  Serial.print("Sensor Location: ");
+//  Serial.println(sensorLocation);
 }
 
 void motorWrite(int spd, int pin_IN1 , int pin_IN2 , int pin_PWM) {
@@ -160,7 +160,7 @@ void drive(int r_speed, int l_speed) {
 }
 
 float computeNormVal(float sensorVal, float minVal, float maxVal){
-  return constrain((sensorVal - minVal) / maxVal, 0.001, 1);
+  return constrain((sensorVal - minVal) / (maxVal - minVal), 0, 1);
 }
 
 float computeSensorXCM(float normalized_I[]){
@@ -172,6 +172,9 @@ float computeSensorXCM(float normalized_I[]){
       den += (normalized_I[i]);
    }
 
+   if(den == 0){
+    return 0;
+   }
    return num/den;
 }
 

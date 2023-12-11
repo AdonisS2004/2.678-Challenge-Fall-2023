@@ -58,8 +58,8 @@ float RMSPEED, LMSPEED;
 int IR1Val, IR2Val, IR3Val;
 
 // sensor intensities
-float maximum_intensities[] = {597, 492, 560}; // less reflectance; more black; //(771 776 779) parallel to the line on the floor
-float minimum_intensities[] = {34, 34, 87}; // high reflectance; more white
+float maximum_intensities[] = {554, 447, 514}; // less reflectance; more black; //(771 776 779) parallel to the line on the floor
+float minimum_intensities[] = {61, 27, 38}; // high reflectance; more white
 float normalized_intensities[3]; // empty varibale to hold normalized values
 
 /////////////////
@@ -70,12 +70,12 @@ float previousSensorLocation = 2;
 
 // PID constants 
 const float KP_LEFT = 140; // left motor proportional gain; prev: 140 (worked)
-const float KI_LEFT = 150; // left motor integral gain prev: 150 (worked)
-const float KD_LEFT = 0.42; // left motor derivative gain prev: 0.42 (worked)
+const float KI_LEFT = 0; // left motor integral gain prev: 150 (worked)
+const float KD_LEFT = 0; // left motor derivative gain prev: 0.42 (worked)
 
 const float KP_RIGHT = 140; // right motor proportional gain; prev: 140 (worked)
-const float KI_RIGHT = 150;// right motor integral gain prev: 150 (worked)
-const float KD_RIGHT = 0.42; // right motor derivative prev: 0.42 (worked)
+const float KI_RIGHT = 0;// right motor integral gain prev: 150 (worked)
+const float KD_RIGHT = 0; // right motor derivative prev: 0.42 (worked)
 
 const float DELTA_TIME = 1; // time in milliseconds
 
@@ -96,7 +96,7 @@ long previousMillis = 0;
 //OBSTACLE COURSE SPECIFIC VARIABLES//
 //////////////////////////////////////
 
-int stage = 2;
+int stage = 1;
 int degree_count = 0;
 int stage_timer = 0;
 int previous_stage_timer = 0;
@@ -120,48 +120,53 @@ void setup() {
   pinMode(STDBY , OUTPUT);
   digitalWrite(STDBY , HIGH);
 
+  // IR setup
   pinMode(IR1_PIN, INPUT);
   pinMode(IR2_PIN, INPUT);
   pinMode(IR3_PIN, INPUT);
 
+  // LED setup
   pinMode(LED1, OUTPUT);
   pinMode(LED2, OUTPUT);
   pinMode(LED3, OUTPUT);
 }
 
 void loop() {
+  //////////////////////
+  //SENSOR VALUE SETUP//
+  //////////////////////
+  
   currentMillis = millis();
   stage_timer = millis();
   int intensities[] = {analogRead(IR1_PIN), analogRead(IR2_PIN), analogRead(IR3_PIN)};
-
+  
   // Add normalized values
   for(int x = 0; x < 3; x++){
     normalized_intensities[x] = computeNormVal(intensities[x], minimum_intensities[x], maximum_intensities[x]);
   }
+  
   float sensorLocation = computeSensorXCM(normalized_intensities);
 
   // Stage One: From Start Past the Barcode 
   if(stage == 1){
-    digitalWrite(LED1, HIGH);
-    digitalWrite(LED2, LOW);
-    digitalWrite(LED3, LOW);
     stage_one(sensorLocation);
     if(stage_timer - previous_stage_timer > stage_one_time){
       stage = 2;
-    } 
-  }
-
-  // Stage two: from Hairpin turn to the beginning of the missing lines
-  if(stage == 2){
-    if(previousSensorLocation > 2.7 && normalized_intensities[0] < 0.05 && normalized_intensities[1] < 0.05 && normalized_intensities[2]){
-      forceRight(); // force right
-    } else if(previousSensorLocation < 1.1 && normalized_intensities[1] < 0.05 && normalized_intensities[2] < 0.05){
-      forceLeft(); // force left
-    } else{
-      stage_two(sensorLocation);
-      previousSensorLocation = sensorLocation;
+      previous_stage_timer = stage_timer;
     }
   }
+
+//  // Stage two: from Hairpin turn to the beginning of the missing lines
+//  if(stage == 2){
+//    if(previousSensorLocation > 2.7 && normalized_intensities[0] < 0.05 && normalized_intensities[1] < 0.05 && normalized_intensities[2]){
+//      forceRight(); // force right
+//    } else if(previousSensorLocation < 1.1 && normalized_intensities[1] < 0.05 && normalized_intensities[2] < 0.05){
+//      forceLeft(); // force left
+//    } else{
+//      stage_two(sensorLocation);
+//      previousSensorLocation = sensorLocation;
+//    }
+//  }
 }
 
 ////////////////////
@@ -172,15 +177,19 @@ void loop() {
 void stage_one(float sensorLocation){
   if ((currentMillis - previousMillis >= DELTA_TIME) ) {
     // regular control
+    if(sensorLocation == 0){
+      drive(140, 140);
+    } else {
       drivePID(sensorLocation, SETPOINT, DELTA_TIME);
       drive(RMSPEED, LMSPEED);
+      // Serial.println("PID");
+    }
       previousMillis = currentMillis;
       // Serial.println("PID");
       digitalWrite(LED1, HIGH);
       digitalWrite(LED2, LOW);
       digitalWrite(LED3, LOW);
   }
-  drive(RMSPEED, LMSPEED);
 }
 
 void stage_two(float sensorLocation){
@@ -197,25 +206,26 @@ void stage_two(float sensorLocation){
   drive(RMSPEED, LMSPEED);
 }
 
-void forceRight(){
-  RMSPEED = -250; // Force Right
-  LMSPEED = 250; // Force Right
-  delay(500);b
-  digitalWrite(LED3, LOW);
-  digitalWrite(LED1, HIGH);
-// Serial.println("FORCE RIGHT");
-}
+//void forceRight(){
+//  RMSPEED = -250; // Force Right
+//  LMSPEED = 250; // Force Right
+//  delay(500);b
+//  digitalWrite(LED3, LOW);
+//  digitalWrite(LED1, HIGH);
+//// Serial.println("FORCE RIGHT");
+//}
+//
+//
+//void forceLeft(){
+//  RMSPEED = 250; // Force Right
+//  LMSPEED = -250; // Force Left
+//  delay(500);
+//  digitalWrite(LED3, HIGH);
+//  digitalWrite(LED1, LOW);
+//// Serial.println("FORCE LEFT");
+//}
 
-void forceLeft(){
-  RMSPEED = 250; // Force Right
-  LMSPEED = -250; // Force Left
-  delay(500);
-  digitalWrite(LED3, HIGH);
-  digitalWrite(LED1, LOW);
-// Serial.println("FORCE LEFT");
-}
-
-
+// used to write voltage to the motors
 void motorWrite(int spd, int pin_IN1 , int pin_IN2 , int pin_PWM) {
   if (spd < 0) {
     digitalWrite(pin_IN1 , HIGH); // go one way
@@ -228,15 +238,18 @@ void motorWrite(int spd, int pin_IN1 , int pin_IN2 , int pin_PWM) {
   analogWrite(pin_PWM , abs(spd));
 }
 
+// makes robot move
 void drive(int r_speed, int l_speed) {
   motorWrite(l_speed, AIN1, AIN2, PWMA);
   motorWrite(r_speed, BIN1, BIN2, PWMB);
 }
 
+// returns a value between 0 and 1 that represents the value/percentage of a sensor value
 float computeNormVal(float sensorVal, float minVal, float maxVal){
-  return constrain((sensorVal - minVal) / maxVal, 0.001, 1);
+  return constrain((sensorVal - minVal) / (maxVal - minVal), 0, 1);
 }
 
+// returns CM of IR sensor
 float computeSensorXCM(float normalized_I[]){
    float num = 0;
    float den = 0;
@@ -246,6 +259,9 @@ float computeSensorXCM(float normalized_I[]){
       den += (normalized_I[i]);
    }
 
+   if(den == 0){
+    return 0;
+   }
    return num/den;
 }
 
