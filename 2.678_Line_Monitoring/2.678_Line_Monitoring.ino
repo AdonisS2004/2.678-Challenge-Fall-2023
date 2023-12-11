@@ -32,7 +32,7 @@ int IR1Val, IR2Val, IR3Val;
 
 // sensor intensities
 float maximum_intensities[] = {554, 447, 514}; // less reflectance; more black; //(771 776 779) parallel to the line on the floor
-float minimum_intensities[] = {61, 27, 38}; // high reflectance; more white
+float minimum_intensities[] = {45, 35, 45}; // high reflectance; more white
 float normalized_intensities[3]; // empty varibale to hold normalized values
 
 /////////////////

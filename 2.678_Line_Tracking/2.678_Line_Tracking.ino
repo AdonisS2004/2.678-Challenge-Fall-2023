@@ -59,7 +59,7 @@ int IR1Val, IR2Val, IR3Val;
 
 // sensor intensities
 float maximum_intensities[] = {554, 447, 514}; // less reflectance; more black; //(771 776 779) parallel to the line on the floor
-float minimum_intensities[] = {70, 35, 45}; // high reflectance; more white
+float minimum_intensities[] = {45, 35, 45}; // high reflectance; more white
 float normalized_intensities[3]; // empty varibale to hold normalized values
 
 /////////////////
@@ -102,7 +102,7 @@ int stage_timer = 0;
 int previous_stage_timer = 0;
 int stage_one_time = 25000;
 int stage_two_time = 10000;
-int stage_three_time = 0; // INSERT VALUE HERE
+int stage_three_time = 4000; // INSERT VALUE HERE
 
 #define LED1 2
 #define LED2 3
@@ -149,7 +149,7 @@ void loop() {
   
   float sensorLocation = computeSensorXCM(normalized_intensities);
 
-  // Stage One: From Start Past the Barcode 
+  // Stage 1: From Start Past the Barcode 
   if(stage == 1){
     stage_one(sensorLocation);
     if(stage_timer - previous_stage_timer > stage_one_time){
@@ -158,12 +158,27 @@ void loop() {
     }
   }
 
-  // Stage two: from Hairpin turn to the beginning of the missing lines
+  // Stage 2: from Hairpin turn to the beginning of the missing lines
   if(stage == 2){
-    digitalWrite(LED1, LOW);
-    digitalWrite(LED2, HIGH);
-    digitalWrite(LED3, LOW);
     stage_two(sensorLocation);
+    if(stage_timer - previous_stage_timer > stage_two_time){
+      stage = 3;
+      previous_stage_timer = stage_timer;
+    }
+  }
+
+  // Stage 3: From the squiggly to the end of dashed lines
+  if(stage == 3){
+    stage_three(sensorLocation);
+    if(stage_timer - previous_stage_timer > stage_three_time){
+      stage = 4;
+      previous_stage_timer = stage_timer;
+    }
+  }
+
+  // Stage 4: From end of dashed lines to the end of the course
+  if(stage == 4){
+    stage_four(sensorLocation);
   }
 }
 
@@ -173,7 +188,7 @@ void loop() {
 ////////////////////
 
 // The course split beteween stages
-// Stage One: From Start Past the Barcode 
+// Stage 1: From Start Past the Barcode 
 void stage_one(float sensorLocation){
   if ((currentMillis - previousMillis >= DELTA_TIME) ) {
     // regular control
@@ -192,9 +207,9 @@ void stage_one(float sensorLocation){
   }
 }
 
-// Stage Two: From the Barcode to the dashed line
+// Stage 2: From the Barcode to the dashed line
 void stage_two(float sensorLocation){
-  if ((currentMillis - previousMillis >= DELTA_TIME) ){
+  if ((currentMillis - previousMillis >= DELTA_TIME)){
     // regular control
     if(previousSensorLocation > 2 && normalized_intensities[0] < 0.1 && normalized_intensities[1] < 0.1 && normalized_intensities[2] > 0.4){
       forceRight(); // Force Right
@@ -214,12 +229,38 @@ void stage_two(float sensorLocation){
       previousMillis = currentMillis;
       previousSensorLocation = sensorLocation;
       // Serial.println("PID");
-      digitalWrite(LED2, HIGH);
    }
   }
+  digitalWrite(LED1, LOW);
+  digitalWrite(LED2, HIGH);
+  digitalWrite(LED3, LOW);
 }
 
-// Stage Three: 
+// Stage 3: From the squiggly to the end of dashed lines
+void stage_three(float sensorLocation){
+  if ((currentMillis - previousMillis >= DELTA_TIME)){
+    if(sensorLocation < 1.3 || sensorLocation > 2.7){
+      drive(140, 140);
+      digitalWrite(LED2, HIGH);
+    } else {
+      drivePID(sensorLocation, SETPOINT, DELTA_TIME);
+      drive(RMSPEED, LMSPEED);
+      previousMillis = currentMillis;
+      previousSensorLocation = sensorLocation;
+      digitalWrite(LED2, LOW);
+      // Serial.println("PID");
+    }
+  }
+  digitalWrite(LED1, LOW);
+  digitalWrite(LED3, HIGH);
+}
+
+// Stage Four: From Dashed Line to the end of the course
+void stage_four(float sensorLocation){
+  if ((currentMillis - previousMillis >= DELTA_TIME)){
+    
+  }
+}
 
 void forceRight(){
   RMSPEED = -100; // Force Right
@@ -236,6 +277,14 @@ void forceLeft(){
   digitalWrite(LED3, HIGH);
   digitalWrite(LED1, LOW);
 // Serial.println("FORCE LEFT");
+}
+
+void sharpRight(){
+  
+}
+
+void sharpLeft(){
+  
 }
 
 // used to write voltage to the motors
