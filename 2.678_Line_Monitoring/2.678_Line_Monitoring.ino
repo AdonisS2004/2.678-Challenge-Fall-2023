@@ -115,16 +115,16 @@ void loop() {
 
   float sensorLocation = computeSensorXCM(normalized_intensities);
 
-  // intensities for monitoring
-  Serial.print("IR1: ");
-  Serial.print(intensities[0]);
-  Serial.print("; ");
-  Serial.print("IR2: ");
-  Serial.print(intensities[1]);
-  Serial.print("; ");
-  Serial.print("IR3: ");
-  Serial.print(intensities[2]);
-  Serial.println("; ");
+//  // intensities for monitoring
+//  Serial.print("IR1: ");
+//  Serial.print(intensities[0]);
+//  Serial.print("; ");
+//  Serial.print("IR2: ");
+//  Serial.print(intensities[1]);
+//  Serial.print("; ");
+//  Serial.print("IR3: ");
+//  Serial.print(intensities[2]);
+//  Serial.println("; ");
 
 //  // normalized values for monitoring
 //  Serial.print("NORM_IR1: ");

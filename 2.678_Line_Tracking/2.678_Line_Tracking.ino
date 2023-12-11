@@ -65,7 +65,7 @@ float normalized_intensities[3]; // empty varibale to hold normalized values
 /////////////////
 //PID VARIABLES//
 /////////////////
-const float SETPOINT = 2.0;
+float SETPOINT = 2.0;
 float previousSensorLocation = 2;
 
 // PID constants 
@@ -96,11 +96,11 @@ long previousMillis = 0;
 //OBSTACLE COURSE SPECIFIC VARIABLES//
 //////////////////////////////////////
 
-int stage = 1;
+int stage = 2;
 int degree_count = 0;
 int stage_timer = 0;
 int previous_stage_timer = 0;
-int stage_one_time = 23000; // INSERT VALUE HERE
+int stage_one_time = 24000; // INSERT VALUE HERE
 
 #define LED1 2
 #define LED2 3
@@ -156,18 +156,16 @@ void loop() {
     }
   }
 
-//  // Stage two: from Hairpin turn to the beginning of the missing lines
-//  if(stage == 2){
-//    if(previousSensorLocation > 2.7 && normalized_intensities[0] < 0.05 && normalized_intensities[1] < 0.05 && normalized_intensities[2]){
-//      forceRight(); // force right
-//    } else if(previousSensorLocation < 1.1 && normalized_intensities[1] < 0.05 && normalized_intensities[2] < 0.05){
-//      forceLeft(); // force left
-//    } else{
-//      stage_two(sensorLocation);
-//      previousSensorLocation = sensorLocation;
-//    }
-//  }
+  // Stage two: from Hairpin turn to the beginning of the missing lines
+  if(stage == 2){
+    digitalWrite(LED1, LOW);
+    digitalWrite(LED2, HIGH);
+    digitalWrite(LED3, LOW);
+    stage_two(sensorLocation);
+    previousSensorLocation = sensorLocation;
+  }
 }
+
 
 ////////////////////
 //Helper Functions//
@@ -193,37 +191,32 @@ void stage_one(float sensorLocation){
 }
 
 void stage_two(float sensorLocation){
-  if ((currentMillis - previousMillis >= DELTA_TIME) ) {
-    // regular control
+      // regular control
       drivePID(sensorLocation, SETPOINT, DELTA_TIME);
       drive(RMSPEED, LMSPEED);
       previousMillis = currentMillis;
+      previousSensorLocation = sensorLocation;
       // Serial.println("PID");
-      digitalWrite(LED1, LOW);
       digitalWrite(LED2, HIGH);
-      digitalWrite(LED3, LOW);
-  }
-  drive(RMSPEED, LMSPEED);
 }
 
-//void forceRight(){
-//  RMSPEED = -250; // Force Right
-//  LMSPEED = 250; // Force Right
-//  delay(500);b
-//  digitalWrite(LED3, LOW);
-//  digitalWrite(LED1, HIGH);
-//// Serial.println("FORCE RIGHT");
-//}
-//
-//
-//void forceLeft(){
-//  RMSPEED = 250; // Force Right
-//  LMSPEED = -250; // Force Left
-//  delay(500);
-//  digitalWrite(LED3, HIGH);
-//  digitalWrite(LED1, LOW);
-//// Serial.println("FORCE LEFT");
-//}
+
+void forceRight(){
+  RMSPEED = -250; // Force Right
+  LMSPEED = 250; // Force Right
+  digitalWrite(LED3, LOW);
+  digitalWrite(LED1, HIGH);
+// Serial.println("FORCE RIGHT");
+}
+
+
+void forceLeft(){
+  RMSPEED = 250; // Force Right
+  LMSPEED =  -250; // Force Left
+  digitalWrite(LED3, HIGH);
+  digitalWrite(LED1, LOW);
+// Serial.println("FORCE LEFT");
+}
 
 // used to write voltage to the motors
 void motorWrite(int spd, int pin_IN1 , int pin_IN2 , int pin_PWM) {
@@ -253,7 +246,7 @@ float computeNormVal(float sensorVal, float minVal, float maxVal){
 float computeSensorXCM(float normalized_I[]){
    float num = 0;
    float den = 0;
-   
+    
    for(int i = 0; i < 3; i++){
       num += (normalized_I[i])*(i+1);
       den += (normalized_I[i]);
@@ -262,6 +255,7 @@ float computeSensorXCM(float normalized_I[]){
    if(den == 0){
     return 0;
    }
+   
    return num/den;
 }
 
