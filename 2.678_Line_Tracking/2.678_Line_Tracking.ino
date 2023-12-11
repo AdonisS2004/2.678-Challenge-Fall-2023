@@ -100,7 +100,8 @@ int stage = 1;
 int degree_count = 0;
 int stage_timer = 0;
 int previous_stage_timer = 0;
-int stage_one_time = 25000;
+bool isTurned = false;
+int stage_one_time = 26000;
 int stage_two_time = 10000;
 int stage_three_time = 4000; // INSERT VALUE HERE
 
@@ -255,10 +256,33 @@ void stage_three(float sensorLocation){
   digitalWrite(LED3, HIGH);
 }
 
-// Stage Four: From Dashed Line to the end of the course
+// Stage Four: From Dashed Line to the end of the two right angles
 void stage_four(float sensorLocation){
   if ((currentMillis - previousMillis >= DELTA_TIME)){
-    
+    if(sensorLocation == 0 && !(isTurned)){
+        digitalWrite(LED2, LOW);
+        digitalWrite(LED3, HIGH);
+        isTurned = true;
+        sharpLeft();
+        drive(RMSPEED, LMSPEED);
+        delay(500);
+    } else if(sensorLocation == 0 && isTurned){
+        digitalWrite(LED2, HIGH);
+        digitalWrite(LED3, LOW);
+        sharpRight();
+        isTurned = false;
+        drive(RMSPEED, LMSPEED);
+        delay(500);
+    } else {
+        drivePID(sensorLocation, SETPOINT, DELTA_TIME);
+        drive(RMSPEED, LMSPEED);
+        previousMillis = currentMillis;
+        previousSensorLocation = sensorLocation;
+        digitalWrite(LED1, HIGH);
+        digitalWrite(LED2, LOW);
+        digitalWrite(LED3, LOW);
+        // Serial.println("PID");
+    }
   }
 }
 
@@ -280,11 +304,19 @@ void forceLeft(){
 }
 
 void sharpRight(){
-  
+  RMSPEED = -250; // Force Right
+  LMSPEED = 250; // Force Right
+  digitalWrite(LED3, LOW);
+  digitalWrite(LED1, HIGH);
+// Serial.println("FORCE RIGHT");
 }
 
 void sharpLeft(){
-  
+  RMSPEED = 250; // Force Right
+  LMSPEED =  -250; // Force Left
+  digitalWrite(LED3, HIGH);
+  digitalWrite(LED1, LOW);
+// Serial.println("FORCE LEFT");
 }
 
 // used to write voltage to the motors
