@@ -126,20 +126,20 @@ void loop() {
 //  Serial.print(intensities[2]);
 //  Serial.println("; ");
 
-//  // normalized values for monitoring
-//  Serial.print("NORM_IR1: ");
-//  Serial.print(normalized_intensities[0]);
-//  Serial.print("; ");
-//  Serial.print("NORM_IR2: ");
-//  Serial.print(normalized_intensities[1]);
-//  Serial.print("; ");
-//  Serial.print("NORM_IR3: ");
-//  Serial.print(normalized_intensities[2]);
-//  Serial.print("; ");
-//
-//  // sensorLocation for monitoring
-//  Serial.print("Sensor Location: ");
-//  Serial.println(sensorLocation);
+  // normalized values for monitoring
+  Serial.print("NORM_IR1: ");
+  Serial.print(normalized_intensities[0]);
+  Serial.print("; ");
+  Serial.print("NORM_IR2: ");
+  Serial.print(normalized_intensities[1]);
+  Serial.print("; ");
+  Serial.print("NORM_IR3: ");
+  Serial.print(normalized_intensities[2]);
+  Serial.print("; ");
+
+  // sensorLocation for monitoring
+  Serial.print("Sensor Location: ");
+  Serial.println(sensorLocation);
 }
 
 void motorWrite(int spd, int pin_IN1 , int pin_IN2 , int pin_PWM) {

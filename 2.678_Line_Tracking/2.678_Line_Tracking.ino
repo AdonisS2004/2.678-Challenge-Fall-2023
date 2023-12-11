@@ -59,7 +59,7 @@ int IR1Val, IR2Val, IR3Val;
 
 // sensor intensities
 float maximum_intensities[] = {554, 447, 514}; // less reflectance; more black; //(771 776 779) parallel to the line on the floor
-float minimum_intensities[] = {61, 27, 38}; // high reflectance; more white
+float minimum_intensities[] = {70, 35, 45}; // high reflectance; more white
 float normalized_intensities[3]; // empty varibale to hold normalized values
 
 /////////////////
@@ -70,12 +70,12 @@ float previousSensorLocation = 2;
 
 // PID constants 
 const float KP_LEFT = 140; // left motor proportional gain; prev: 140 (worked)
-const float KI_LEFT = 0; // left motor integral gain prev: 150 (worked)
-const float KD_LEFT = 0; // left motor derivative gain prev: 0.42 (worked)
+const float KI_LEFT = 150; // left motor integral gain prev: 150 (worked)
+const float KD_LEFT = 0.42; // left motor derivative gain prev: 0.42 (worked)
 
 const float KP_RIGHT = 140; // right motor proportional gain; prev: 140 (worked)
-const float KI_RIGHT = 0;// right motor integral gain prev: 150 (worked)
-const float KD_RIGHT = 0; // right motor derivative prev: 0.42 (worked)
+const float KI_RIGHT = 150;// right motor integral gain prev: 150 (worked)
+const float KD_RIGHT = 0.42; // right motor derivative prev: 0.42 (worked)
 
 const float DELTA_TIME = 1; // time in milliseconds
 
@@ -96,11 +96,13 @@ long previousMillis = 0;
 //OBSTACLE COURSE SPECIFIC VARIABLES//
 //////////////////////////////////////
 
-int stage = 2;
+int stage = 1;
 int degree_count = 0;
 int stage_timer = 0;
 int previous_stage_timer = 0;
-int stage_one_time = 24000; // INSERT VALUE HERE
+int stage_one_time = 25000;
+int stage_two_time = 10000;
+int stage_three_time = 0; // INSERT VALUE HERE
 
 #define LED1 2
 #define LED2 3
@@ -162,7 +164,6 @@ void loop() {
     digitalWrite(LED2, HIGH);
     digitalWrite(LED3, LOW);
     stage_two(sensorLocation);
-    previousSensorLocation = sensorLocation;
   }
 }
 
@@ -172,6 +173,7 @@ void loop() {
 ////////////////////
 
 // The course split beteween stages
+// Stage One: From Start Past the Barcode 
 void stage_one(float sensorLocation){
   if ((currentMillis - previousMillis >= DELTA_TIME) ) {
     // regular control
@@ -190,20 +192,38 @@ void stage_one(float sensorLocation){
   }
 }
 
+// Stage Two: From the Barcode to the dashed line
 void stage_two(float sensorLocation){
-      // regular control
+  if ((currentMillis - previousMillis >= DELTA_TIME) ){
+    // regular control
+    if(previousSensorLocation > 2 && normalized_intensities[0] < 0.1 && normalized_intensities[1] < 0.1 && normalized_intensities[2] > 0.4){
+      forceRight(); // Force Right
+      drive(RMSPEED, LMSPEED);
+     // Serial.println("FORCE RIGHT");
+    } else if(normalized_intensities[0] < 0.1 && normalized_intensities[1] < 0.1 && normalized_intensities[2] < 0.1) {
+      forceRight(); // Force Right
+      drive(RMSPEED, LMSPEED);
+     // Serial.println("FORCE RIGHT");
+    } else if(previousSensorLocation < 2 && normalized_intensities[0] > 0.4 && normalized_intensities[1] < 0.1 && normalized_intensities[2] < 0.1){
+      forceLeft(); // Force Left
+      drive(RMSPEED, LMSPEED);
+     // Serial.println("FORCE LEFT");
+    } else {     
       drivePID(sensorLocation, SETPOINT, DELTA_TIME);
       drive(RMSPEED, LMSPEED);
       previousMillis = currentMillis;
       previousSensorLocation = sensorLocation;
       // Serial.println("PID");
       digitalWrite(LED2, HIGH);
+   }
+  }
 }
 
+// Stage Three: 
 
 void forceRight(){
-  RMSPEED = -250; // Force Right
-  LMSPEED = 250; // Force Right
+  RMSPEED = -100; // Force Right
+  LMSPEED = 200; // Force Right
   digitalWrite(LED3, LOW);
   digitalWrite(LED1, HIGH);
 // Serial.println("FORCE RIGHT");
@@ -211,8 +231,8 @@ void forceRight(){
 
 
 void forceLeft(){
-  RMSPEED = 250; // Force Right
-  LMSPEED =  -250; // Force Left
+  RMSPEED = 200; // Force Right
+  LMSPEED =  -100; // Force Left
   digitalWrite(LED3, HIGH);
   digitalWrite(LED1, LOW);
 // Serial.println("FORCE LEFT");
