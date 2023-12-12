@@ -59,7 +59,7 @@ int IR1Val, IR2Val, IR3Val;
 
 // sensor intensities
 float maximum_intensities[] = {554, 447, 514}; // less reflectance; more black; //(771 776 779) parallel to the line on the floor
-float minimum_intensities[] = {45, 35, 45}; // high reflectance; more white
+float minimum_intensities[] = {90, 35, 45}; // high reflectance; more white
 float normalized_intensities[3]; // empty varibale to hold normalized values
 
 /////////////////
@@ -96,14 +96,15 @@ long previousMillis = 0;
 //OBSTACLE COURSE SPECIFIC VARIABLES//
 //////////////////////////////////////
 
-int stage = 4;
+int stage = 5;
 int degree_count = 0;
 int stage_timer = 0;
 int previous_stage_timer = 0;
 bool isTurned = false;
-int stage_one_time = 26000;
-int stage_two_time = 10000;
-int stage_three_time = 4000; // INSERT VALUE HERE
+int stage_one_time = 23000;
+int stage_two_time = 8500;
+int stage_three_time = 2700;
+int stage_five_time = 8250;
 int round_about_time = 0;
 
 #define LED1 2
@@ -183,11 +184,20 @@ void loop() {
     stage_four(sensorLocation);
     if(degree_count == 2){
       stage == 5;
+      previous_stage_timer = stage_timer;
     }
   }
 
   if (stage == 5){
-    
+    stage_five(sensorLocation);
+    if(stage_timer - previous_stage_timer > stage_five_time){
+      stage = 6;
+      previous_stage_timer = stage_timer;
+    }
+  }
+
+  if(stage == 6){
+    stage_six(sensorLocation);
   }
 }
 
@@ -297,11 +307,38 @@ void stage_four(float sensorLocation){
 }
 
 void stage_five(float sensorLocation){
-    
+  if ((currentMillis - previousMillis >= DELTA_TIME) ) {
+    drivePID(sensorLocation, SETPOINT, DELTA_TIME);
+    drive(RMSPEED, LMSPEED);
+    // Serial.println("PID");
+    previousMillis = currentMillis;
+    // Serial.println("PID");
+    digitalWrite(LED1, HIGH);
+    digitalWrite(LED2, HIGH);
+    digitalWrite(LED3, LOW);
+  }
 }
 
 void stage_six(float sensorLocation){
-  
+  if ((currentMillis - previousMillis >= DELTA_TIME) ) {
+    digitalWrite(LED1, LOW);
+    if(sensorLocation == 0){
+        digitalWrite(LED1, HIGH);
+        isTurned = true;
+        sharpLeft();
+        drive(RMSPEED, LMSPEED);
+        delay(500);
+        SETPOINT = 2.7;
+    } else {
+      drivePID(sensorLocation, SETPOINT, DELTA_TIME);
+      drive(RMSPEED, LMSPEED);
+      // Serial.println("PID");
+      previousMillis = currentMillis;
+      // Serial.println("PID");
+      digitalWrite(LED2, HIGH);
+      digitalWrite(LED3, HIGH);
+    }
+  }
 }
 
 void forceRight(){
