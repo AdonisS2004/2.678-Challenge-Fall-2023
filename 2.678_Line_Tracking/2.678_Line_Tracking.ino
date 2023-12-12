@@ -96,7 +96,7 @@ long previousMillis = 0;
 //OBSTACLE COURSE SPECIFIC VARIABLES//
 //////////////////////////////////////
 
-int stage = 1;
+int stage = 4;
 int degree_count = 0;
 int stage_timer = 0;
 int previous_stage_timer = 0;
@@ -104,6 +104,7 @@ bool isTurned = false;
 int stage_one_time = 26000;
 int stage_two_time = 10000;
 int stage_three_time = 4000; // INSERT VALUE HERE
+int round_about_time = 0;
 
 #define LED1 2
 #define LED2 3
@@ -180,6 +181,13 @@ void loop() {
   // Stage 4: From end of dashed lines to the end of the course
   if(stage == 4){
     stage_four(sensorLocation);
+    if(degree_count == 2){
+      stage == 5;
+    }
+  }
+
+  if (stage == 5){
+    
   }
 }
 
@@ -265,6 +273,7 @@ void stage_four(float sensorLocation){
         isTurned = true;
         sharpLeft();
         drive(RMSPEED, LMSPEED);
+        degree_count++;
         delay(500);
     } else if(sensorLocation == 0 && isTurned){
         digitalWrite(LED2, HIGH);
@@ -272,6 +281,7 @@ void stage_four(float sensorLocation){
         sharpRight();
         isTurned = false;
         drive(RMSPEED, LMSPEED);
+        degree_count++;
         delay(500);
     } else {
         drivePID(sensorLocation, SETPOINT, DELTA_TIME);
@@ -284,6 +294,14 @@ void stage_four(float sensorLocation){
         // Serial.println("PID");
     }
   }
+}
+
+void stage_five(float sensorLocation){
+    
+}
+
+void stage_six(float sensorLocation){
+  
 }
 
 void forceRight(){
@@ -304,16 +322,16 @@ void forceLeft(){
 }
 
 void sharpRight(){
-  RMSPEED = -250; // Force Right
-  LMSPEED = 250; // Force Right
+  RMSPEED = -150; // Force Right
+  LMSPEED = 150; // Force Right
   digitalWrite(LED3, LOW);
   digitalWrite(LED1, HIGH);
 // Serial.println("FORCE RIGHT");
 }
 
 void sharpLeft(){
-  RMSPEED = 250; // Force Right
-  LMSPEED =  -250; // Force Left
+  RMSPEED = 1500; // Force Right
+  LMSPEED =  -150; // Force Left
   digitalWrite(LED3, HIGH);
   digitalWrite(LED1, LOW);
 // Serial.println("FORCE LEFT");
