@@ -307,6 +307,7 @@ void stage_four(float sensorLocation){
   }
 }
 
+//Stage Five: From the end of the two right angles past the fork split
 void stage_five(float sensorLocation){
   if ((currentMillis - previousMillis >= DELTA_TIME) ) {
     drivePID(sensorLocation, SETPOINT, DELTA_TIME);
@@ -320,9 +321,11 @@ void stage_five(float sensorLocation){
   }
 }
 
+//Stage Five: From the fork split to the end of the course (UNTESTED)
 void stage_six(float sensorLocation){
   if(stage_timer - previous_stage_timer > stage_six_time && !stageSixBool){
     stageSixBool = true;
+    digitalWrite(LED1, HIGH);
     if(RMSPEED > LMSPEED){
       sharpRight();
       drive(RMSPEED, LMSPEED);
