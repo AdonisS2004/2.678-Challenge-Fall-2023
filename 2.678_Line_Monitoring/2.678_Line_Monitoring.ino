@@ -20,6 +20,17 @@ const int RIGHT_NORMAL_SPEED = 140;
 const int MAX_MOTOR_SPEED = 255;
 float RMSPEED, LMSPEED;
 
+int stage = 1;
+int degree_count = 0;
+int stage_timer = 0;
+int previous_stage_timer = 0;
+bool isTurned = false;
+bool stageSixBool = false;
+int stage_one_time = 22200;
+int stage_two_time = 8500;
+int stage_three_time = 2700;
+int stage_five_time = 9500;
+int stage_six_time = 4300;
 /////////////////////////////////
 // REFLECTANCE SENSOR VARIABLES//
 /////////////////////////////////
