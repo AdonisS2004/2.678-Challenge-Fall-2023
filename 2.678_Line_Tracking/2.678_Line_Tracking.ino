@@ -96,16 +96,17 @@ long previousMillis = 0;
 //OBSTACLE COURSE SPECIFIC VARIABLES//
 //////////////////////////////////////
 
-int stage = 5;
+int stage = 6;
 int degree_count = 0;
 int stage_timer = 0;
 int previous_stage_timer = 0;
 bool isTurned = false;
+bool stageSixBool = false;
 int stage_one_time = 23000;
 int stage_two_time = 8500;
 int stage_three_time = 2700;
 int stage_five_time = 8250;
-int round_about_time = 0;
+int stage_six_time = 4000;
 
 #define LED1 2
 #define LED2 3
@@ -320,24 +321,33 @@ void stage_five(float sensorLocation){
 }
 
 void stage_six(float sensorLocation){
+  if(stage_timer - previous_stage_timer > stage_six_time && !stageSixBool){
+    stageSixBool = true;
+    if(RMSPEED > LMSPEED){
+      sharpRight();
+      drive(RMSPEED, LMSPEED);
+      delay(200);
+    } else {
+      sharpLeft();
+      drive(RMSPEED, LMSPEED);
+      delay(200);
+    }
+  }
+  
   if ((currentMillis - previousMillis >= DELTA_TIME) ) {
-    digitalWrite(LED1, LOW);
+    // regular control
     if(sensorLocation == 0){
-        digitalWrite(LED1, HIGH);
-        isTurned = true;
-        sharpLeft();
-        drive(RMSPEED, LMSPEED);
-        delay(500);
-        SETPOINT = 2.7;
+      drive(140, 140);
     } else {
       drivePID(sensorLocation, SETPOINT, DELTA_TIME);
       drive(RMSPEED, LMSPEED);
       // Serial.println("PID");
+    }
       previousMillis = currentMillis;
       // Serial.println("PID");
+      digitalWrite(LED1, LOW);
       digitalWrite(LED2, HIGH);
       digitalWrite(LED3, HIGH);
-    }
   }
 }
 
